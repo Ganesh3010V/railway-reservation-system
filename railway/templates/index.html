@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Railway Reservation System — DBMS Mini Project</title>
+    <meta name="description"
+        content="Railway Reservation System with Multi-Leg Journey Support & Automated Waitlist Management">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- ═══ HEADER ═══ -->
+    <header class="header">
+        <div class="header-brand">
+            <div class="logo"><i class="fas fa-train"></i></div>
+            <div class="brand-text">
+                <h1>Indian Railway Reservation</h1>
+                <p>Multi-Leg Journey &bull; Automated Waitlist &bull; DBMS Mini Project</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <span class="badge badge-red">DBMS Project</span>
+            <span class="header-user"><i class="fas fa-user-graduate"></i> Ganesh &mdash; UVCE Bangalore</span>
+        </div>
+    </header>
+
+    <div class="app">
+        <!-- ═══ SIDEBAR ═══ -->
+        <nav class="sidebar" id="sidebar">
+            <ul class="nav-list">
+                <li class="nav-item active" data-page="dashboard"><i
+                        class="fas fa-tachometer-alt"></i><span>Dashboard</span></li>
+                <li class="nav-divider">Administration</li>
+                <li class="nav-item" data-page="trains"><i class="fas fa-train"></i><span>Trains &amp; Routes</span>
+                </li>
+                <li class="nav-item" data-page="stations"><i class="fas fa-map-marker-alt"></i><span>Stations</span>
+                </li>
+                <li class="nav-item" data-page="passengers"><i class="fas fa-users"></i><span>Passengers</span></li>
+                <li class="nav-divider">Operations</li>
+                <li class="nav-item" data-page="search"><i class="fas fa-search"></i><span>Search Trains</span></li>
+                <li class="nav-item" data-page="book"><i class="fas fa-ticket-alt"></i><span>Book Ticket</span></li>
+                <li class="nav-item" data-page="pnr"><i class="fas fa-id-card"></i><span>PNR Status</span></li>
+                <li class="nav-item" data-page="cancel"><i class="fas fa-times-circle"></i><span>Cancel Ticket</span>
+                </li>
+                <li class="nav-item" data-page="chart"><i class="fas fa-th"></i><span>Booking Chart</span></li>
+                <li class="nav-item" data-page="bill"><i class="fas fa-receipt"></i><span>Generate Bill</span></li>
+                <li class="nav-divider">Analytics</li>
+                <li class="nav-item" data-page="reports"><i class="fas fa-chart-bar"></i><span>Reports</span></li>
+                <li class="nav-item" data-page="queries"><i class="fas fa-terminal"></i><span>DBMS Queries</span></li>
+            </ul>
+            <div class="sidebar-footer">
+                <div class="db-badge"><i class="fas fa-database"></i> MySQL 8.0</div>
+            </div>
+        </nav>
+
+        <!-- ═══ MAIN CONTENT ═══ -->
+        <main class="content" id="content">
+
+            <!-- ── DASHBOARD ── -->
+            <section id="page-dashboard" class="page active">
+                <div class="page-header">
+                    <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+                    <div class="concept-tag"><i class="fas fa-database"></i> Aggregate Functions: COUNT, SUM, AVG</div>
+                </div>
+                <div class="stats-grid" id="statsGrid"></div>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Recent Bookings</h3>
+                        <div id="recentBookings" class="table-wrap"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Seat Occupancy</h3>
+                        <div id="occupancyData" class="table-wrap"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── TRAINS ── -->
+            <section id="page-trains" class="page">
+                <div class="page-header">
+                    <h2><i class="fas fa-train"></i> Trains &amp; Routes</h2>
+                    <div class="concept-tag"><i class="fas fa-database"></i> JOIN, Foreign Keys, CASCADE</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>All Trains</h3>
+                        <button class="btn btn-primary" onclick="toggleForm('addTrainForm')"><i class="fas fa-plus"></i>
+                            Add Train</button>
+                    </div>
+                    <div id="addTrainForm" class="form-inline hidden">
+                        <input type="number" id="trainNo" placeholder="Train No" class="input">
+                        <input type="text" id="trainName" placeholder="Train Name" class="input">
+                        <input type="text" id="trainSrc" placeholder="Source Code" class="input input-sm">
+                        <input type="text" id="trainDst" placeholder="Dest Code" class="input input-sm">
+                        <button class="btn btn-success" onclick="addTrain()"><i class="fas fa-check"></i> Save</button>
+                    </div>
+                    <div id="trainsTable" class="table-wrap"></div>
+                </div>
+                <div class="card" id="routeCard" style="display:none">
+                    <h3 id="routeTitle">Route</h3>
+                    <div id="routeTimeline" class="timeline"></div>
+                    <div id="routeTable" class="table-wrap"></div>
+                    <h3 style="margin-top:1.5rem">Seat Classes &amp; Availability</h3>
+                    <div id="seatClassesTable" class="table-wrap"></div>
+                </div>
+            </section>
+
+            <!-- ── STATIONS ── -->
+            <section id="page-stations" class="page">
+                <div class="page-header">
+                    <h2><i class="fas fa-map-marker-alt"></i> Stations</h2>
+                    <div class="concept-tag"><i class="fas fa-database"></i> PRIMARY KEY, VARCHAR</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>All Stations</h3>
+                        <button class="btn btn-primary" onclick="toggleForm('addStationForm')"><i
+                                class="fas fa-plus"></i> Add Station</button>
+                    </div>
+                    <div id="addStationForm" class="form-inline hidden">
+                        <input type="text" id="stCode" placeholder="Code (e.g. SBC)" class="input input-sm">
+                        <input type="text" id="stName" placeholder="Station Name" class="input">
+                        <input type="text" id="stCity" placeholder="City" class="input">
+                        <button class="btn btn-success" onclick="addStation()"><i class="fas fa-check"></i>
+                            Save</button>
+                    </div>
+                    <div id="stationsTable" class="table-wrap"></div>
+                </div>
+            </section>
+
+            <!-- ── PASSENGERS ── -->
+            <section id="page-passengers" class="page">
+                <div class="page-header">
+                    <h2><i class="fas fa-users"></i> Passengers</h2>
+                    <div class="concept-tag"><i class="fas fa-database"></i> CRUD, CHECK Constraint, ENUM</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Passenger Registry</h3>
+                        <button class="btn btn-primary" onclick="toggleForm('addPassengerForm')"><i
+                                class="fas fa-plus"></i> Add Passenger</button>
+                    </div>
+                    <div id="addPassengerForm" class="form-inline hidden">
+                        <input type="text" id="pName" placeholder="Full Name" class="input">
+                        <input type="number" id="pAge" placeholder="Age" class="input input-xs" min="1" max="119">
+                        <select id="pGender" class="input input-sm">
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                            <option value="O">Other</option>
+                        </select>
+                        <input type="text" id="pContact" placeholder="Phone" class="input">
+                        <button class="btn btn-success" onclick="addPassenger()"><i class="fas fa-check"></i>
+                            Save</button>
+                    </div>
+                    <div id="passengersTable" class="table-wrap"></div>
+                </div>
+            </section>
+
+            <!-- ── SEARCH TRAINS ── -->
+            <section id="page-search" class="page">
+                <div class="page-header">
+                    <h2><i class="fas fa-search"></i> Search Trains</h2>
+                    <div class="concept-tag"><i class="fas fa-database"></i> Multi-table JOIN (5 tables), Subquery</div>
+                </div>
+                <div class="card">
+                    <h3>Find Trains Between Stations</h3>
+                    <div class="search-form">
+                        <div class="search-field">
+                            <label>From Station</label>
+                            <select id="searchFrom" class="input"></select>
+                        </div>
+                        <div class="search-swap" onclick="swapStations()"><i class="fas fa-exchange-alt"></i></div>
+                        <div class="search-field">
+                            <label>To Station</label>
+                            <select id="searchTo" class="input"></select>
+                        </div>
+                        <button class="btn btn-primary btn-lg" onclick="searchTrains()"><i class="fas fa-search"></i>
+                            Search</button>
+                    </div>
+                </div>
+                <div id="searchResults"></div>
+            </section>
+
+            <!-- ── BOOK TICKET ── -->
+            <section id="page-book" class="page">
+                <div class="page-header">
+                    <h2><i class="fas fa-ticket-alt"></i> Book a Ticket</h2>
+                    <div class="concept-tag"><i class="fas fa-database"></i> INSERT, UPDATE, Foreign Keys, Seat
+                        Allocation</div>
+                </div>
+                <div class="card">
+                    <h3>New Booking</h3>
+                    <div class="booking-form">
+                        <div class="form-group">
+                            <label>Passenger</label>
+                            <select id="bookPassenger" class="input"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Train</label>
+                            <select id="bookTrain" class="input" onchange="onBookTrainChange()"></select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Boarding Station</label>
+                                <select id="bookFrom" class="input"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Exit Station</label>
+                                <select id="bookTo" class="input"></select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Seat Class</label>
+                                <select id="bookClass" class="input"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Journey Date</label>
+                                <input type="date" id="bookDate" class="input">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-lg" onclick="bookTicket()"><i class="fas fa-ticket-alt"></i>
+                            Book Now</button>
+                    </div>
+                </div>
+                <div id="bookingResult"></div>
+
+                <!-- ── SPLIT BOOKING STATUS PANELS ── -->
+                <div style="margin-top:1.5rem">
+
+                    <!-- Summary Count Bar -->
+                    <div
+                        style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center;justify-content:space-between">
+                        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+                            <span id="cnfCountBadge"
+                                style="display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;color:#2e7d32;border:1.5px solid #a5d6a7;padding:6px 14px;border-radius:20px;font-weight:700;font-size:.85rem"><i
+                                    class="fas fa-check-circle"></i> Confirmed: 0</span>
+                            <span id="wlCountBadge"
+                                style="display:inline-flex;align-items:center;gap:6px;background:#fff3e0;color:#e65100;border:1.5px solid #ffcc80;padding:6px 14px;border-radius:20px;font-weight:700;font-size:.85rem"><i
+                                    class="fas fa-clock"></i> Waitlisted: 0</span>
+                            <span id="canCountBadge"
+                                style="display:inline-flex;align-items:center;gap:6px;background:#fce4ec;color:#c62828;border:1.5px solid #ef9a9a;padding:6px 14px;border-radius:20px;font-weight:700;font-size:.85rem"><i
+                                    class="fas fa-times-circle"></i> Cancelled: 0</span>
+                        </div>
+                        <div style="display:flex;gap:.5rem;align-items:center">
+                            <input type="text" id="bookingSearchInput" class="input"
+                                placeholder="Search name, PNR, train..." oninput="filterBookingsTable()"
+                                style="width:230px">
+                            <button class="btn btn-sm btn-outline" onclick="loadBookingsInBookingPage()"><i
+                                    class="fas fa-sync-alt"></i> Refresh</button>
+                        </div>
+                    </div>
+
+                    <!-- CONFIRMED PASSENGERS -->
+                    <div class="card" style="border-left:5px solid #2e7d32;margin-bottom:1rem">
+                        <div
+                            style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1.25rem;background:#f1f8f1;border-radius:8px 8px 0 0;border-bottom:1px solid #c8e6c9">
+                            <i class="fas fa-check-circle" style="color:#2e7d32;font-size:1.2rem"></i>
+                            <h3 style="margin:0;color:#2e7d32">Confirmed Passengers</h3>
+                            <span id="bookingCountBadge"
+                                style="background:#2e7d32;color:#fff;padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:700">0</span>
+                        </div>
+                        <div id="confirmedBookingsTable" class="table-wrap"></div>
+                    </div>
+
+                    <!-- WAITLISTED PASSENGERS -->
+                    <div class="card" style="border-left:5px solid #e65100;margin-bottom:1rem">
+                        <div
+                            style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1.25rem;background:#fff8f1;border-radius:8px 8px 0 0;border-bottom:1px solid #ffe0b2">
+                            <i class="fas fa-clock" style="color:#e65100;font-size:1.2rem"></i>
+                            <h3 style="margin:0;color:#e65100">Waitlisted Passengers</h3>
+                            <span id="wlBadge"
+                                style="background:#e65100;color:#fff;padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:700">0</span>
+                            <small style="color:#888;margin-left:4px"><i class="fas fa-info-circle"></i> Will be
+                                auto-promoted on cancellation via trigger</small>
+                        </div>
+                        <div id="waitlistedBookingsTable" class="table-wrap"></div>
+                    </div>
+
+                    <!-- CANCELLED PASSENGERS -->
+                    <div class="card" style="border-left:5px solid #c62828">
+                        <div
+                            style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1.25rem;background:#fff5f5;border-radius:8px 8px 0 0;border-bottom:1px solid #ffcdd2">
+                            <i class="fas fa-times-circle" style="color:#c62828;font-size:1.2rem"></i>
+                            <h3 style="margin:0;color:#c62828">Cancelled Passengers</h3>
+                            <span id="canBadge"
+                                style="background:#c62828;color:#fff;padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:700">0</span>
+                        </div>
+                        <div id="cancelledBookingsTable" class="table-wrap"></div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ── PNR STATUS ── -->
+            <section id="page-pnr" class="page">
+                <div class="page-header">
+                    <h2><i class="fas fa-id-card"></i> PNR Status</h2>
+                    <div class="concept-tag"><i class="fas fa-database"></i> 8-table JOIN, Computed Column</div>
+                </div>
+                <div class="card">
+                    <h3>Look Up PNR</h3>
+                    <div class="pnr-search">
+                        <input type="number" id="pnrInput" placeholder="Enter PNR Number" class="input input-lg">
+                        <button class="btn btn-primary btn-lg" onclick="lookupPNR()"><i class="fas fa-search"></i> Check
+                            Status</button>
+                    </div>
+                </div>
+                <div id="pnrResult"></div>
+                <div class="card" style="margin-top:1.5rem">
+                    <h3>All Bookings</h3>
+                    <div id="allBookingsTable" class="table-wrap"></div>
+                </div>
+            </section>
+
+            <!-- ── CANCEL TICKET ── -->
+            <section id="page-cancel" class="page">
+                <div class="page-header">
+                    <h2><i class="fas fa-times-circle"></i> Cancel Ticket</h2>
+                    <div class="concept-tag"><i class="fas fa-database"></i> Stored Procedure: CancelBooking + Trigger:
+                        trg_free_seat_after_cancel</div>
+                </div>
+                <div class="card">
+                    <div class="concept-detail">
+                        <i class="fas fa-info-circle"></i>
+                        <p>Cancelling a confirmed seat triggers <strong>trg_free_seat_after_cancel</strong> (frees the
+                            Seat row),
+                            then the <strong>CancelBooking</strong> stored procedure finds the earliest waitlisted
+                            passenger
+                            with an overlapping segment and auto-promotes them to Confirmed.</p>
+                    </div>
+                    <h3>Active Bookings</h3>
+                    <div id="cancelBookingsTable" class="table-wrap"></div>
+                    <div class="cancel-form" style="margin-top:1rem">
+                        <input type="number" id="cancelPNR" placeholder="PNR to Cancel" class="input">
+                        <button class="btn btn-danger" onclick="cancelTicket()"><i class="fas fa-times"></i> Cancel
+                            Booking</button>
+                    </div>
+                </div>
+                <div id="cancelResult"></div>
+            </section>
+
+            <!-- ── GENERATE BILL ── -->
+            <section id="page-bill" class="page">
+                <div class="page-header">
+                    <h2><i class="fas fa-receipt"></i> Generate Bill</h2>
+                    <div class="concept-tag"><i class="fas fa-database"></i> Stored Procedure: GenerateBill (fare =
+                        distance × FarePerKm)</div>
+                </div>
+                <div class="card">
+                    <div class="concept-detail">
+                        <i class="fas fa-info-circle"></i>
+                        <p>The <strong>GenerateBill</strong> stored procedure computes fare by looking up
+                            DistanceFromOrigin for both boarding and exit stations via RouteStation,
+                            multiplies the difference by FarePerKm from SeatClass, and inserts a Payment record.</p>
+                    </div>
+                    <h3>Confirmed Bookings (Unpaid)</h3>
+                    <div id="billBookingsTable" class="table-wrap"></div>
+                    <div class="bill-form" style="margin-top:1rem">
+                        <input type="number" id="billPNR" placeholder="PNR" class="input">
+                        <select id="billMode" class="input input-sm">
+                            <option value="UPI">UPI</option>
+                            <option value="Card">Card</option>
+                            <option value="Cash">Cash</option>
+                        </select>
+                        <button class="btn btn-success" onclick="generateBill()"><i class="fas fa-receipt"></i> Generate
+                            Bill</button>
+                    </div>
+                </div>
+                <div id="billResult"></div>
+            </section>
+
+            <!-- ── BOOKING CHART (Indian Railway Style) ── -->
+            <section id="page-chart" class="page">
+                <div class="page-header">
+                    <h2><i class="fas fa-th"></i> Booking Chart</h2>
+                    <div class="concept-tag"><i class="fas fa-database"></i> LEFT JOIN, CASE WHEN, GROUP BY, Real-time
+                        Aggregation</div>
+                </div>
+                <div class="concept-detail">
+                    <i class="fas fa-info-circle"></i>
+                    <p>This chart works exactly like the <strong>Indian Railway Reservation Chart</strong> — it shows
+                        <strong>seat-wise allocation</strong> with passenger names, a <strong>donut chart</strong> for
+                        booking status breakdown,
+                        and the <strong>waitlist queue</strong>. It auto-updates after every booking or cancellation.
+                    </p>
+                </div>
+
+                <!-- Status Overview -->
+                <div class="chart-overview">
+                    <div class="chart-donut-card">
+                        <h3><i class="fas fa-chart-pie"></i> Booking Status</h3>
+                        <div class="donut-wrap">
+                            <canvas id="donutChart" width="220" height="220"></canvas>
+                            <div class="donut-center" id="donutCenter">0<br><small>Bookings</small></div>
+                        </div>
+                        <div class="donut-legend" id="donutLegend"></div>
+                    </div>
+                    <div class="chart-summary-cards" id="chartSummaryCards"></div>
+                </div>
+
+                <!-- Train Selector & Chart Preparation Action -->
+                <div class="card">
+                    <div class="card-header"
+                        style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+                        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+                            <h3><i class="fas fa-train"></i> Train Chart</h3>
+                            <select id="chartTrainSelect" class="input" style="width:auto;min-width:280px"
+                                onchange="loadTrainChart()"></select>
+                            <span id="chartStatusBadge" class="badge badge-red"
+                                style="padding:6px 14px;font-size:.78rem"><i class="fas fa-circle-notch"></i> Chart Not
+                                Prepared</span>
+                        </div>
+                        <div style="display:flex;gap:.6rem;align-items:center">
+                            <button class="btn btn-primary" onclick="triggerChartPreparation()"><i
+                                    class="fas fa-clipboard-check"></i> Prepare Chart Now</button>
+                            <button class="btn btn-secondary" onclick="window.print()"><i class="fas fa-print"></i>
+                                Print Chart</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart View Tabs -->
+                <div class="tabs" style="display:flex;gap:.5rem;margin-bottom:1rem">
+                    <button class="tab-btn active" id="tabBtnConfirmed" onclick="switchChartTab('confirmed')"><i
+                            class="fas fa-check-circle" style="color:var(--ir-green)"></i> Confirmed Manifest (<span
+                            id="cnfCountBadge">0</span>)</button>
+                    <button class="tab-btn" id="tabBtnWaitlist" onclick="switchChartTab('waitlist')"><i
+                            class="fas fa-clock" style="color:var(--ir-orange)"></i> Waiting List Queue (<span
+                            id="wlCountBadge">0</span>)</button>
+                    <button class="tab-btn" id="tabBtnCoach" onclick="switchChartTab('coach')"><i class="fas fa-th"></i>
+                        Coach &amp; Seat Layout</button>
+                </div>
+
+                <!-- Tab 1: Confirmed Tickets -->
+                <div id="chartTabConfirmed" class="chart-tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-list-ol"></i> Confirmed Passengers (Official IRCTC Manifest)</h3>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>PNR</th>
+                                        <th>Passenger</th>
+                                        <th>Age/Sex</th>
+                                        <th>Class</th>
+                                        <th>Coach</th>
+                                        <th>Seat</th>
+                                        <th>Berth Type</th>
+                                        <th>Journey Route</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="confirmedPassengerBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Waiting List -->
+                <div id="chartTabWaitlist" class="chart-tab-content" style="display:none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-hourglass-half"></i> Current Waiting List Passengers (FIFO Order)</h3>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>WL No.</th>
+                                        <th>PNR</th>
+                                        <th>Passenger</th>
+                                        <th>Age/Sex</th>
+                                        <th>Class</th>
+                                        <th>Journey Route</th>
+                                        <th>Booking Time</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="waitingPassengerBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Detailed Coach Layout -->
+                <div id="chartTabCoach" class="chart-tab-content" style="display:none">
+                    <div id="trainChartArea"></div>
+                </div>
+            </section>
+
+            <!-- ── REPORTS ── -->
+            <section id="page-reports" class="page">
+                <div class="page-header">
+                    <h2><i class="fas fa-chart-bar"></i> Reports &amp; Analytics</h2>
+                    <div class="concept-tag"><i class="fas fa-database"></i> GROUP BY, HAVING, Aggregate: SUM, COUNT,
+                        COALESCE</div>
+                </div>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Revenue by Train</h3>
+                        <div id="revenueByTrain" class="table-wrap"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Bookings by Status</h3>
+                        <div id="bookingsByStatus"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Revenue by Payment Mode</h3>
+                        <div id="revenueByMode" class="table-wrap"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Most Popular Routes</h3>
+                        <div id="popularRoutes" class="table-wrap"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── DBMS QUERIES LAB & CONSOLE ── -->
+            <section id="page-queries" class="page">
+                <div class="page-header">
+                    <h2><i class="fas fa-terminal"></i> DBMS Academic Queries Lab</h2>
+                    <div class="concept-tag"><i class="fas fa-database"></i> Mandatory Academic Evaluation Queries:
+                        Joins, Aggregates, Subqueries, Views</div>
+                </div>
+
+                <div class="card">
+                    <div class="concept-detail">
+                        <i class="fas fa-graduation-cap"></i>
+                        <p>This laboratory console executes standard <strong>DBMS Academic Queries</strong> against the
+                            live MySQL database.
+                            Select any of the 12 categorized queries below to view its SQL syntax and run it live, or
+                            enter custom SQL in the console.</p>
+                    </div>
+
+                    <div
+                        style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-top:1rem">
+                        <div style="flex:1;min-width:280px">
+                            <label style="font-weight:700;display:block;margin-bottom:6px;font-size:.82rem">Select
+                                Academic Query</label>
+                            <select id="academicQuerySelect" class="input" style="width:100%"
+                                onchange="onAcademicQuerySelectChange()"></select>
+                        </div>
+                        <div style="display:flex;gap:.5rem;align-self:flex-end">
+                            <button class="btn btn-primary btn-lg" onclick="executeSelectedQuery()"><i
+                                    class="fas fa-play"></i> Run Query</button>
+                            <button class="btn btn-outline btn-lg" onclick="toggleCustomSQLConsole()"><i
+                                    class="fas fa-code"></i> Custom SQL</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Query Details Card -->
+                <div class="card" id="queryMetaCard" style="margin-top:1rem">
+                    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+                        <h3 id="queryTitleText">Query Details</h3>
+                        <span id="queryCategoryBadge" class="badge badge-red">Category</span>
+                    </div>
+                    <p id="queryDescriptionText" style="color:var(--text);margin-bottom:.75rem;font-size:.88rem"></p>
+                    <div
+                        style="background:#1e1e2f;color:#e2e8f0;padding:1rem;border-radius:8px;font-family:'Courier New',monospace;font-size:.82rem;position:relative;overflow-x:auto">
+                        <pre id="querySQLCode" style="margin:0;white-space:pre-wrap"></pre>
+                        <button class="btn btn-sm btn-outline"
+                            style="position:absolute;top:8px;right:8px;color:#fff;border-color:rgba(255,255,255,.3);padding:2px 8px;font-size:.7rem"
+                            onclick="copyQuerySQL()"><i class="fas fa-copy"></i> Copy SQL</button>
+                    </div>
+                </div>
+
+                <!-- Custom SQL Console Drawer -->
+                <div class="card" id="customSQLDrawer" style="display:none;margin-top:1rem">
+                    <div class="card-header">
+                        <h3><i class="fas fa-keyboard"></i> Custom SQL Terminal (For Faculty Evaluation)</h3>
+                    </div>
+                    <textarea id="customSQLInput" class="input"
+                        style="width:100%;height:100px;font-family:'Courier New',monospace;font-size:.85rem"
+                        placeholder="Type any valid MySQL SELECT query here... e.g. SELECT * FROM Train;"></textarea>
+                    <div style="display:flex;justify-content:flex-end;margin-top:.75rem">
+                        <button class="btn btn-success" onclick="executeCustomSQL()"><i class="fas fa-bolt"></i> Execute
+                            Custom SQL</button>
+                    </div>
+                </div>
+
+                <!-- Query Results Card -->
+                <div class="card" id="queryResultsCard" style="margin-top:1rem">
+                    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+                        <h3><i class="fas fa-table"></i> Query Execution Output</h3>
+                        <div id="queryStatsBadge" style="font-size:.8rem;color:var(--text-light);font-weight:600"></div>
+                    </div>
+                    <div id="queryResultsArea" class="table-wrap">
+                        <div style="text-align:center;padding:2rem;color:var(--text-light)">Click <strong>"Run
+                                Query"</strong> above to execute this query against MySQL.</div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- ═══ LIVE CHAT ASSISTANT WIDGET ═══ -->
+    <div id="railChatWidget" class="rail-chat-widget">
+        <button id="railChatToggle" class="rail-chat-btn" onclick="toggleRailChat()">
+            <i class="fas fa-robot"></i> <span>Live Assistant</span>
+        </button>
+        <div id="railChatBox" class="rail-chat-box" style="display:none">
+            <div class="rail-chat-header">
+                <div style="display:flex;align-items:center;gap:.5rem">
+                    <i class="fas fa-robot" style="color:var(--ir-orange)"></i>
+                    <strong>RailBot Live Assistant</strong>
+                </div>
+                <button class="rail-chat-close" onclick="toggleRailChat()">&times;</button>
+            </div>
+            <div id="railChatMessages" class="rail-chat-messages">
+                <div class="chat-msg bot">
+                    👋 Hello! I am your <strong>Live Railway Assistant</strong>. I can help with real-time chart
+                    preparation, confirmed tickets, and waiting lists:
+                    <ul style="margin:6px 0 0 16px;font-size:.82rem">
+                        <li><code>prepare chart 12658</code></li>
+                        <li><code>show waitlist</code></li>
+                        <li><code>confirmed tickets</code></li>
+                        <li><code>pnr 1</code></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="rail-chat-input-bar">
+                <input type="text" id="railChatInput" placeholder="Ask about waitlist, tickets, chart..."
+                    onkeydown="if(event.key==='Enter') sendRailChat()">
+                <button onclick="sendRailChat()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ EDIT BOOKING MODAL ═══ -->
+    <div id="editBookingModal" class="modal" style="display:none">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Edit Booking <span id="editBookingPNRBadge" class="badge badge-red"
+                        style="font-size:.75rem;padding:3px 8px"></span></h3>
+                <button class="modal-close" onclick="closeEditBookingModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editPNR">
+                <input type="hidden" id="editTrainNo">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Passenger</label>
+                        <select id="editPassenger" class="input"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Journey Date</label>
+                        <input type="date" id="editJourneyDate" class="input">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Boarding Station</label>
+                        <select id="editBoarding" class="input"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Exit Station</label>
+                        <select id="editExit" class="input"></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="editStatus" class="input">
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Waitlisted">Waitlisted</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:.5rem">
+                <button class="btn btn-secondary" onclick="closeEditBookingModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitEditBooking()"><i class="fas fa-save"></i> Save
+                    Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>
